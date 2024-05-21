@@ -29,8 +29,10 @@ func (b *Blockchain) Start() {
 
 		for _, blockchain := range b.Blockchains {
 			bc_service := services.NewBlockchainService(blockchain)
-			height := bc_service.Height()
-			config.Logger.Info(height)
+			err := bc_service.ProcessBlock(blockchain.Height)
+			if err != nil {
+				config.Logger.Error(err)
+			}
 		}
 
 		time.Sleep(1 * time.Second)

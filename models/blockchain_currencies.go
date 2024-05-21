@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/nusa-exchange/finex/config"
@@ -22,14 +23,14 @@ type BlockchainCurrencies struct {
 	AutoUpdateFeesEnabled bool            `json:"auto_update_fees_enabled"`
 	BaseFactor            int64           `json:"base_factor"`
 	Status                string          `json:"status"`
-	Options               Options         `json:"options"`
+	Options               []byte          `json:"options" gorm:"type:json"`
 	CreatedAt             time.Time       `json:"created_at"`
 	UpdatedAt             time.Time       `json:"updated_at"`
 }
 
 type Options struct {
-	GasLimit        int64  `json:"gas_limit,omitempty"`
-	GasPrice        int64  `json:"gas_price,omitempty"`
+	GasLimit        string `json:"gas_limit,omitempty"`
+	GasPrice        string `json:"gas_price,omitempty"`
 	ContractAddress string `json:"contract_address,omitempty"`
 }
 
@@ -53,11 +54,20 @@ func (bc BlockchainCurrencies) Blockchain() *Blockchains {
 	return blockchain
 }
 
-func (bc BlockchainCurrencies) ToAPISetting() ToBlockchainAPISetting {
+func (bc *BlockchainCurrencies) ToAPISetting() ToBlockchainAPISetting {
+	var optionData *Options
+	var apisetting ToBlockchainAPISetting
+
+	err := json.Unmarshal(bc.Options, &optionData)
+	if err != nil {
+		config.Logger.Error(err)
+		return apisetting
+	}
+
 	return ToBlockchainAPISetting{
 		ID:                  bc.CurrencyID,
 		BaseFactor:          bc.BaseFactor,
 		MinCollectionAmount: bc.MinCollectionAmount,
-		Options:             bc.Options,
+		Options:             *optionData,
 	}
 }

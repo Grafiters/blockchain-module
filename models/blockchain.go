@@ -30,9 +30,19 @@ type Blockchains struct {
 	MinWithdrawAmount   decimal.Decimal `json:"min_withdraw_amount"`
 }
 
-func (b Blockchains) WhitelistedAddresses() []*WhitelistedAddresses {
+func (b *Blockchains) WhitelistedAddresses() []*WhitelistedAddresses {
 	var whitelist []*WhitelistedAddresses
 	config.DataBase.Where("blockchain_key = ?", b.Key).Find(&whitelist)
 
 	return whitelist
+}
+
+func (b *Blockchains) Server() string {
+	var server string
+	server, err := config.Vault.DecryptValue(b.ServerEncrypted)
+	if err != nil {
+		config.Logger.Error(err)
+	}
+	config.Logger.Info(server)
+	return server
 }

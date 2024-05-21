@@ -20,6 +20,7 @@ var KafkaProducer *services.KafkaProducer
 var RangoClient *services.RangoClient
 var Referral *types.Referral
 var Redis *services.RedisClient
+var Vault *VaultService
 
 func InitializeConfig() error {
 	err := godotenv.Load()
@@ -61,6 +62,11 @@ func InitializeConfig() error {
 
 	var config *types.Config
 	if yaml.Unmarshal(buf, &config) != nil {
+		return err
+	}
+
+	Vault, err = InitVault(os.Getenv("VAULT_ADDR"), os.Getenv("VAULT_TOKEN"))
+	if err != nil {
 		return err
 	}
 
