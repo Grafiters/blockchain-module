@@ -39,7 +39,7 @@ func (b *Blockchains) WhitelistedAddresses() []*WhitelistedAddresses {
 
 func (b *Blockchains) Server() string {
 	var server string
-	server, err := config.Vault.DecryptValue(b.ServerEncrypted)
+	server, err := config.Vault.DecryptValue("_blockchains_server", b.ServerEncrypted)
 	if err != nil {
 		config.Logger.Error(err)
 	}

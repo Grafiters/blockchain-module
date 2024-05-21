@@ -37,8 +37,8 @@ func InitVault(address, token string) (*VaultService, error) {
 	return vs, nil
 }
 
-func (vs *VaultService) DecryptValue(value string) (string, error) {
-	path := strings.ToLower("transit/decrypt/"+os.Getenv("VAULT_APP_NAME")) + "_blockchains_server"
+func (vs *VaultService) DecryptValue(query string, value string) (string, error) {
+	path := strings.ToLower("transit/decrypt/"+os.Getenv("VAULT_APP_NAME")) + query
 	secret, err := vs.Vault.Logical().Write(path, map[string]interface{}{
 		"ciphertext": value,
 	})
