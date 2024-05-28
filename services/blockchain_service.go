@@ -55,3 +55,10 @@ func (bc_service *BlockchainService) ProcessBlock(height int64) error {
 
 	return nil
 }
+
+func (bc_service *BlockchainService) Deposit(data []*lib.TranscationConvertion) error {
+	var wallet []*models.Wallet
+	config.DataBase.Where("kind = ?", models.DepositKindWallet).First(&wallet)
+
+	return nil
+}
