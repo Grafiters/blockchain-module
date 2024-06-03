@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/nusa-exchange/finex/config"
+	"github.com/nusa-exchange/finex/controllers/helpers"
 	"github.com/nusa-exchange/finex/lib"
 	"github.com/nusa-exchange/finex/models"
+	"github.com/shopspring/decimal"
 )
 
 type EtherBlockchain struct{}
@@ -79,7 +81,7 @@ func (bl *BlockchainLibrary) FetchBlocks(height int64) ([]*lib.TranscationConver
 		if tx.Type == "Ether" {
 			tx_data := &lib.TranscationConvertion{
 				Hash:          tx.Txid,
-				Amount:        tx.Amount,
+				Amount:        helpers.ConvertFromBase(decimal.NewFromInt(tx.Amount), bl.Coin.BaseFactor),
 				FromAddresses: tx.From,
 				ToAddress:     tx.To,
 				Txout:         1,
@@ -95,7 +97,7 @@ func (bl *BlockchainLibrary) FetchBlocks(height int64) ([]*lib.TranscationConver
 					if strings.ToLower(tx.ContractAddress) == strings.ToLower(sc.Options.ContractAddress) {
 						tx_data := &lib.TranscationConvertion{
 							Hash:          tx.Txid,
-							Amount:        tx.Amount,
+							Amount:        helpers.ConvertFromBase(decimal.NewFromInt(tx.Amount), sc.BaseFactor),
 							FromAddresses: tx.From,
 							ToAddress:     tx.To,
 							Txout:         1,
@@ -112,4 +114,36 @@ func (bl *BlockchainLibrary) FetchBlocks(height int64) ([]*lib.TranscationConver
 	}
 
 	return transactions, nil
+}
+
+func (bl *BlockchainLibrary) FetchTransaction(hash string) (*lib.TransactionReceipt, error) {
+	var receipt *lib.TransactionReceipt
+	body := lib.ReceiptParams{
+		Hash: hash,
+	}
+
+	requestBody, err := json.Marshal(body)
+	if err != nil {
+		config.Logger.Error("Failed to marshal object :", err)
+		return nil, err
+	}
+
+	data, err := bl.Client.Post("get-transaction", *bytes.NewBuffer(requestBody))
+	if err != nil {
+		config.Logger.Error(err)
+		return nil, err
+	}
+
+	recordJSON, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling data to JSON:", err)
+		return nil, err
+	}
+
+	err = json.Unmarshal(recordJSON, &receipt)
+	if err != nil {
+		return nil, err
+	}
+
+	return receipt, nil
 }

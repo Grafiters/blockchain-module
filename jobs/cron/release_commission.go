@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/jasonlvhit/gocron"
-	"github.com/shopspring/decimal"
 	"github.com/nusa-exchange/finex/config"
 	"github.com/nusa-exchange/finex/models"
 	"github.com/nusa-exchange/finex/types"
+	"github.com/shopspring/decimal"
 )
 
 type ReleaseCommissionJob struct {

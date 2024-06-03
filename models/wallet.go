@@ -41,3 +41,9 @@ func (w *Wallet) Settings() string {
 
 	return details
 }
+
+func (w *Wallet) CurrencyWalelt(currency string) *CurrencyWallet {
+	var cw *CurrencyWallet
+	config.DataBase.Where("currency_id = ?", currency).First(&cw)
+	return cw
+}

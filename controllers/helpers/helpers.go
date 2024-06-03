@@ -3,6 +3,7 @@ package helpers
 import (
 	"github.com/gookit/validate"
 	"github.com/nusa-exchange/finex/types"
+	"github.com/shopspring/decimal"
 )
 
 type Errors struct {
@@ -98,4 +99,12 @@ func ValidateTakerType(val types.TakerType) bool {
 
 func ValidateMarketType(val string) bool {
 	return true
+}
+
+func ConvertToBase(amount decimal.Decimal, sub_unit int64) decimal.Decimal {
+	return amount.Mul(decimal.NewFromInt(sub_unit))
+}
+
+func ConvertFromBase(amount decimal.Decimal, sub_unit int64) decimal.Decimal {
+	return amount.Div(decimal.NewFromInt(sub_unit))
 }
