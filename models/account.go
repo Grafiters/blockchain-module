@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"github.com/nusa-exchange/finex/config"
 	"github.com/nusa-exchange/finex/types"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 

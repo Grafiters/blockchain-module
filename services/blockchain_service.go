@@ -76,7 +76,7 @@ func (bc_service *BlockchainService) FilteringData(data []*lib.TranscationConver
 		currency_wallet = wallet.CurrencyWalelt(i.CurrencyID)
 
 		var address_depo *models.PaymentAddress
-		config.DataBase.Where("address = ? AND blockchain_key = ? AND wallet_id = ?", i.ToAddress, bc_service.Blockchain.Key, currency_wallet.WalletID).First(&address_depo)
+		config.DataBase.Where("blockchain_key = ? AND wallet_id = ?", bc_service.Blockchain.Key, currency_wallet.WalletID).Or("address = ? AND blockchain_key = ? AND wallet_id = ?", i.ToAddress, bc_service.Blockchain.Key, currency_wallet.WalletID).Where("LOWER(address) = ?", i.ToAddress).Or("address = ?", i.ToAddress).First(&address_depo)
 
 		if address_depo != nil {
 			deposit_data = append(deposit_data, i)
@@ -84,8 +84,9 @@ func (bc_service *BlockchainService) FilteringData(data []*lib.TranscationConver
 
 		config.DataBase.Where("blockchain_key = ? AND kind = ?", bc_service.Blockchain.Key, models.HotKindWallet).First(&wallet)
 		currency_wallet = wallet.CurrencyWalelt(i.CurrencyID)
+
 		var address_withdraw *models.PaymentAddress
-		config.DataBase.Where("address = ? AND blockchain_key = ? AND wallet_id = ?", i.FromAddresses, bc_service.Blockchain.Key, currency_wallet.WalletID).First(&address_withdraw)
+		config.DataBase.Where("blockchain_key = ? AND wallet_id = ?", bc_service.Blockchain.Key, currency_wallet.WalletID).Where("LOWER(address) = ?", i.FromAddresses).Or("address = ?", i.FromAddresses).First(&address_withdraw)
 
 		if address_withdraw != nil {
 			withdraw_data = append(withdraw_data, i)
@@ -105,6 +106,7 @@ func (bc_service *BlockchainService) UpdateDeposit(transaction *lib.TranscationC
 		currency_wallet *models.CurrencyWallet
 		payment_address *models.PaymentAddress
 		transactions    *models.Transactions
+		deposit         *models.Deposit
 	)
 	config.DataBase.Where("blockchain_key = ? AND currency_id = ?", bc_service.Blockchain.Key, transaction.CurrencyID).First(&bc_currency)
 
@@ -137,6 +139,27 @@ func (bc_service *BlockchainService) UpdateDeposit(transaction *lib.TranscationC
 	if transaction.FromAddresses == "" {
 		config.Logger.Info("Skip deposit with hash ", transaction.Hash, " transaction source from address is null")
 		return nil
+	}
+
+	config.DataBase.Where("txid = ? AND currency_id = ? AND blockchain_key = ? AND txout = ?", transaction.Hash, transaction.CurrencyID, bc_service.Blockchain.Key, transaction.Txout).Assign(
+		&models.Deposit{
+			MemberID:      payment_address.Member().ID,
+			CurrencyID:    transaction.CurrencyID,
+			Amount:        transaction.Amount,
+			FromAddresses: transaction.FromAddresses,
+			Address:       transaction.ToAddress,
+			BlockNumber:   transaction.BlockNumber,
+			Txid:          transaction.Hash,
+			BlockchainKey: bc_service.Blockchain.Key,
+			Type:          models.CryptoTransfer,
+		},
+	).FirstOrCreate(&deposit)
+	config.DataBase.Where("id = ?", deposit.ID).Update("block_number", transaction.BlockNumber)
+
+	err = deposit.Accept()
+	if err != nil {
+		config.Logger.Error("Deposit can't accepted")
+		return err
 	}
 
 	return nil
